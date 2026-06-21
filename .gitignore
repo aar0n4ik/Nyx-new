@@ -1,0 +1,11 @@
+node_modules/
+.env
+.poli.key
+data/index.json
+evidence/poli.jsonl
+evidence/netguard.json
+evidence/bench.csv
+*.log
+models.lock
+evidence/poli.pub
+data/solutions.json

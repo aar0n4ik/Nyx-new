@@ -1,0 +1,10 @@
+Nyx
+Copyright (c) 2026 Bohdan (AARON4IK)
+
+This product includes software built on:
+- @qvac/sdk (Tether QVAC) — Apache License 2.0
+- @tetherto/wdk (Tether Wallet Development Kit)
+
+Model weights downloaded at setup time are governed by their respective
+licenses (e.g. Meta Llama community license for LLaMA models, Piper for TTS).
+Review each model's license before redistribution.

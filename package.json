@@ -1,0 +1,24 @@
+{
+  "name": "nyx",
+  "version": "0.7.0",
+  "type": "module",
+  "description": "Verifiable, on-device edge-AI copilot built on the QVAC SDK, with a Zero-Trust Bitfinex (USD₮) trading assistant",
+  "license": "Apache-2.0",
+  "scripts": {
+    "setup": "node scripts/setup-models.js && node -e \"import('./src/rag.js').then(m=>m.buildIndex())\"",
+    "model": "npm i @qvac/sdk && node scripts/setup-models.js",
+    "keys": "node scripts/gen-keys.js",
+    "start": "node server.js",
+    "bench": "node scripts/bench.js",
+    "verify": "node verify.js",
+    "demo": "bash scripts/demo.sh",
+    "hwproof": "node scripts/hwproof.js",
+    "evidence": "node scripts/evidence.js"
+  },
+  "dependencies": {
+    "@qvac/sdk": "^0.13.5"
+  },
+  "optionalDependencies": {
+    "systeminformation": "^5.22.0"
+  }
+}

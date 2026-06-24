@@ -1,0 +1,25 @@
+{
+  "_note": "SANITIZED SAMPLE \u2014 not a real device. Generate your own with `npm run hwproof`; the real report is git-ignored and never committed.",
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "node": "v22.17.0",
+  "specs": {
+    "hostname": "DEVICE",
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "x86-64 CPU (8 threads)",
+    "cores": 8,
+    "ramGB": 16,
+    "ramFreeGB": 8,
+    "loadAvg": 0,
+    "uptimeH": 1,
+    "osBuild": "Windows 11 (x64)",
+    "gpu": ["Integrated GPU"],
+    "board": "OEM",
+    "bios": "1.0",
+    "disks": [{ "model": "NVMe SSD", "sizeGB": 512 }],
+    "directX": "12",
+    "tempC": null,
+    "ramUsedPct": 50,
+    "cpuLoadPct": 10
+  }
+}

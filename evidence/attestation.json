@@ -1,0 +1,6 @@
+[
+  {
+    "model": "QWEN3_4B_INST_Q4_K_M",
+    "type": "llamacpp-completion"
+  }
+]

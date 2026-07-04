@@ -1133,7 +1133,7 @@ section.alt{background:var(--nyx-soft);border-top:1px solid var(--nyx-line);bord
   <nav class="nav-in">
     <a class="brand" href="#top"><span class="logo-mark"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><defs><linearGradient id="nyxg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2783de"/><stop offset="1" stop-color="#7b5cff"/></linearGradient></defs><rect x="2" y="2" width="28" height="28" rx="8" fill="url(#nyxg1)"/><path d="M9 23V9l14 14V9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Nyx</a>
     <div class="nav-links" id="navlinks">
-      <a href="/app" data-i18n="nav_chat">AI Chat</a>
+      <a href="#download">Download</a>
       <a href="#features" data-i18n="nav_features">Features</a>
       <a href="#integrations" data-i18n="nav_integrations">Integrations</a>
       <a href="#trust" data-i18n="nav_security">Security</a>
@@ -1153,7 +1153,7 @@ section.alt{background:var(--nyx-soft);border-top:1px solid var(--nyx-line);bord
         <option value="es">🇪🇸 ES</option>
         <option value="de">🇩🇪 DE</option>
       </select>
-      <a class="btn btn-primary" href="/app" data-i18n="cta_chat">Try the AI Chat</a>
+      <a class="btn btn-primary" href="#download">⬇ Download Nyx</a>
       <button class="nav-burger" id="burger" aria-label="Menu">☰</button>
     </div>
   </nav>
@@ -1168,7 +1168,7 @@ section.alt{background:var(--nyx-soft);border-top:1px solid var(--nyx-line);bord
     <h1 data-i18n="hero_h">Nyx — the autonomous AI that <span class="accent">runs your machine</span></h1>
     <p class="lede" data-i18n="hero_p">Nyx is a fully autonomous on-device AI operator. It scans your hardware, writes and validates real system scripts, and executes everything locally — from running native Windows updates to opening live USD₮ trades on Bitfinex — with a signed proof for every action and zero cloud calls.</p>
     <div class="hero-actions">
-      <a class="btn btn-primary big" href="/app" data-i18n="cta_chat">Try the AI Chat</a>
+      <a class="btn btn-primary big" href="#download">⬇ Download Nyx</a>
       <a class="btn btn-ghost" href="#features" data-i18n="hero_see">See what it does</a>
     </div>
     <div class="pill-row">
@@ -1190,30 +1190,60 @@ section.alt{background:var(--nyx-soft);border-top:1px solid var(--nyx-line);bord
   </div>
 </section>
 
-<!-- DEMO -->
-<span class="anchor" id="demo"></span>
+<!-- DOWNLOAD -->
+<span class="anchor" id="download"></span>
 <section class="alt">
   <div class="wrap">
     <div class="section-head">
-      <div class="kicker" data-i18n="demo_kicker">The operator</div>
-      <h2 data-i18n="demo_h2">A full-screen AI workspace — not a chat popup</h2>
-      <p data-i18n="demo_p2">Open a dedicated, full-screen operator: a multi-chat sidebar with neuro-naming, live device telemetry, and the Zero-Trust trade flow. It detects your language and stays in it.</p>
+      <div class="kicker">Download</div>
+      <h2>Pick the right model for your PC</h2>
+      <p>Nyx runs fully on your device — no internet needed. Select your hardware to get a recommendation, then download.</p>
     </div>
-    <div class="demo-grid">
-      <div class="chat-cta reveal">
-        <div class="cc-badge"><span class="live"></span> on-device · private</div>
-        <h3 data-i18n="cc_h">Launch the full-screen operator</h3>
-        <p data-i18n="cc_p">Multi-chat sidebar, neuro-naming, live PC telemetry and Zero-Trust trading — in a dedicated workspace, not a popup.</p>
-        <a class="btn btn-primary big" href="/app" data-i18n="cta_chat">Try the AI Chat</a>
+    <style>
+    .nyxf{background:#fff;border:1px solid var(--nyx-line);border-radius:16px;padding:26px;max-width:640px;margin:0 auto 30px;text-align:center;box-shadow:var(--nyx-shadow)}
+    .nyxf h3{margin:0 0 6px;font-size:19px}
+    .nyxrs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+    .nyxr{border:2px solid var(--nyx-line);background:#fff;border-radius:12px;padding:10px 16px;font-weight:650;font-size:14px;cursor:pointer;color:#374151;font-family:inherit;transition:.15s}
+    .nyxr:hover{border-color:var(--nyx-blue);color:var(--nyx-blue)}
+    .nyxr.on{background:var(--nyx-blue);border-color:var(--nyx-blue);color:#fff}
+    .nyxrec{background:linear-gradient(135deg,#eaf3fe,#f7faff);border:1px solid #c8dff7;border-radius:14px;padding:16px 20px;margin-top:16px;text-align:left;display:none}
+    .nyxrec .l{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--nyx-blue)}
+    .nyxrec .n{font-size:18px;font-weight:780;margin:4px 0}
+    .nyxrec .w{font-size:14px;color:var(--nyx-muted)}
+    .nyxb{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;margin-bottom:8px}
+    .cards .card.on{border-color:var(--nyx-blue)!important;box-shadow:0 0 0 2px rgba(39,131,222,.2)!important}
+    .nyxs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+    .nyxs span{background:var(--nyx-soft);border:1px solid var(--nyx-line);border-radius:8px;padding:4px 9px;font-size:12px;font-weight:600;color:#374151}
+    .nyxos{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+    </style>
+    <div class="nyxf">
+      <h3>🔍 What's your hardware?</h3>
+      <p class="notion-muted" style="margin:0">Tell us your RAM and we'll recommend the best model.</p>
+      <div class="nyxrs">
+        <button class="nyxr" onclick="nyxPick(this,'l')">4–8 GB RAM</button>
+        <button class="nyxr" onclick="nyxPick(this,'b')">8–16 GB RAM</button>
+        <button class="nyxr" onclick="nyxPick(this,'s')">16–32 GB + GPU</button>
+        <button class="nyxr" onclick="nyxPick(this,'m')">32+ GB / RTX 4080+</button>
       </div>
-      <div class="demo-side">
-        <div class="card reveal"><div class="ico">🛠️</div><h3 data-i18n="cc_c1h">Acts on your OS</h3><p data-i18n="cc_c1p">Generates and validates PowerShell/Bash on the fly, runs it through a Zero-Trust safety check, then executes it itself.</p></div>
-        <div class="card reveal"><div class="ico">⚡</div><h3 data-i18n="cc_c2h">Instant, never hangs</h3><p data-i18n="cc_c2p">Greetings answer in &lt;1s; heavy compute is spent only on real automation.</p><div class="meter"><i></i></div></div>
-        <div class="card reveal"><div class="ico">💱</div><h3 data-i18n="cc_c3h">Tether-native trading</h3><p data-i18n="cc_c3p">Live USD₮ data from Bitfinex with on-device risk checks and USD₮ fee accounting (WDK settlement planned).</p></div>
-      </div>
+      <div class="nyxrec" id="nyxRec"></div>
+    </div>
+    <div class="cards">
+      <div class="card" id="nc-l"><span class="nyxb" style="background:#ecfdf5;color:#059669">🟢 Light</span><h3>Phi-3 Mini 3.8B</h3><p>Smart enough for everyday chat, PC tasks and voice — even without a GPU.</p><div class="nyxs"><span>💾 2.2 GB</span><span>🖥️ 4–8 GB RAM</span><span>⚡ Fastest</span></div><a class="btn btn-primary" href="https://github.com/aar0n4ik/Nyx-new/releases/latest" target="_blank">⬇ Download</a></div>
+      <div class="card" id="nc-b"><span class="nyxb" style="background:#fffbeb;color:#d97706">🟡 Balanced</span><h3>Llama 3.1 8B</h3><p>Best balance of speed and intelligence for mid-range hardware.</p><div class="nyxs"><span>💾 4.7 GB</span><span>🖥️ 8–16 GB</span><span>🏆 Recommended</span></div><a class="btn btn-primary" href="https://github.com/aar0n4ik/Nyx-new/releases/latest" target="_blank">⬇ Download</a></div>
+      <div class="card" id="nc-s"><span class="nyxb" style="background:#fff7ed;color:#ea580c">🟠 Strong</span><h3>Qwen2.5 14B</h3><p>Very smart, excellent at code and system tasks. Needs 16+ GB and a GPU.</p><div class="nyxs"><span>💾 8.5 GB</span><span>🖥️ 16+ GB</span><span>🎯 RTX 3070+</span></div><a class="btn btn-primary" href="https://github.com/aar0n4ik/Nyx-new/releases/latest" target="_blank">⬇ Download</a></div>
+      <div class="card" id="nc-m"><span class="nyxb" style="background:#fdf4ff;color:#9333ea">🔴 Maximum</span><h3>Llama 3.3 70B</h3><p>Near GPT-4 quality, fully private. Requires RTX 4080/4090 with 24+ GB VRAM.</p><div class="nyxs"><span>💾 ~40 GB</span><span>🖥️ RTX 4080+</span><span>👑 Best</span></div><a class="btn btn-primary" href="https://github.com/aar0n4ik/Nyx-new/releases/latest" target="_blank">⬇ Download</a></div>
+    </div>
+    <div class="nyxos">
+      <a class="btn btn-ghost" href="https://github.com/aar0n4ik/Nyx-new/releases/latest" target="_blank">🪟 Windows (.exe)</a>
+      <a class="btn btn-ghost" href="https://github.com/aar0n4ik/Nyx-new/releases/latest" target="_blank">🍎 macOS (.dmg)</a>
+      <a class="btn btn-ghost" href="https://github.com/aar0n4ik/Nyx-new/releases/latest" target="_blank">🐧 Linux (.AppImage)</a>
     </div>
   </div>
 </section>
+<script>
+var NYXM={l:{n:'Phi-3 Mini 3.8B Q4',w:'Perfect for your hardware. Fast and smart without a GPU.'},b:{n:'Llama 3.1 8B Q4',w:'Best balance of speed and intelligence for your setup.'},s:{n:'Qwen2.5 14B Q4',w:'Your GPU can run this — much smarter for code and complex tasks.'},m:{n:'Llama 3.3 70B Q4',w:'Near GPT-4 quality, fully private. Best local model available.'}};
+function nyxPick(el,t){document.querySelectorAll('.nyxr').forEach(function(b){b.classList.remove('on')});el.classList.add('on');document.querySelectorAll('.cards .card').forEach(function(c){c.classList.remove('on')});var c=document.getElementById('nc-'+t);if(c)c.classList.add('on');var r=document.getElementById('nyxRec'),m=NYXM[t];r.innerHTML='<div class="l">⭐ Recommended for you</div><div class="n">'+m.n+'</div><div class="w">'+m.w+'</div>';r.style.display='block';}
+</script>
 
 <!-- FEATURES -->
 <span class="anchor" id="features"></span>
@@ -1339,7 +1369,7 @@ section.alt{background:var(--nyx-soft);border-top:1px solid var(--nyx-line);bord
       <h2 data-i18n="cta_h">Let’s build the private machine economy</h2>
       <p data-i18n="cta_p">Nyx is open for collaboration, feedback and the Tether Developer Grant track.</p>
       <div class="hero-actions">
-        <a class="btn btn-primary" href="/app" data-i18n="cta_chat">Try the AI Chat</a>
+        <a class="btn btn-primary" href="#download">⬇ Download Nyx</a>
       </div>
       <div class="cta-socials">
         <a class="brandbtn gh" href="https://github.com/aar0n4ik" target="_blank" rel="noopener" aria-label="GitHub" title="GitHub"><svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12 .5A11.5 11.5 0 0 0 .5 12 11.5 11.5 0 0 0 8.4 23c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.5-.3-5.2-1.3-5.2-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5 18 5.3 18 5.3c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.2 5.7.4.3.8 1 .8 2.1v3.1c0 .3.2.7.8.6A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg></a>
@@ -1359,7 +1389,7 @@ section.alt{background:var(--nyx-soft);border-top:1px solid var(--nyx-line);bord
     </div>
     <div class="foot-col">
       <b data-i18n="foot_product">Product</b>
-      <a href="/app" data-i18n="cta_chat">Try the AI Chat</a>
+      <a href="#download">⬇ Download Nyx</a>
       <a href="#features" data-i18n="nav_features">Features</a>
       <a href="#integrations" data-i18n="nav_integrations">Integrations</a>
       <a href="#trust" data-i18n="nav_security">Security</a>

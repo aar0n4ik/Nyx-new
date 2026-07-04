@@ -13,12 +13,55 @@
     "verify": "node verify.js",
     "demo": "bash scripts/demo.sh",
     "hwproof": "node scripts/hwproof.js",
-    "evidence": "node scripts/evidence.js"
+    "evidence": "node scripts/evidence.js",
+    "electron": "electron .",
+    "dist": "electron-builder --win"
   },
   "dependencies": {
     "@qvac/sdk": "^0.13.5"
   },
   "optionalDependencies": {
     "systeminformation": "^5.22.0"
+  },
+  "main": "electron/main.cjs",
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.aaron4ik.nyx",
+    "productName": "Nyx",
+    "files": [
+      "**/*",
+      "!dist"
+    ],
+    "extraResources": [
+      {
+        "from": ".",
+        "to": "app",
+        "filter": [
+          "server.js",
+          "src/**",
+          "public/**",
+          "scripts/**",
+          "verify.js",
+          "package.json",
+          "models.lock"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "Nyx-Setup-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
+    }
   }
 }

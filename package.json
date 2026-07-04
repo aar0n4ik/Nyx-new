@@ -15,7 +15,7 @@
     "hwproof": "node scripts/hwproof.js",
     "evidence": "node scripts/evidence.js",
     "electron": "electron .",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win --publish never"
   },
   "dependencies": {
     "@qvac/sdk": "^0.13.5"

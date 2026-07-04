@@ -63,5 +63,9 @@
       "createStartMenuShortcut": true,
       "runAfterFinish": true
     }
+  },
+  "author": {
+    "name": "Bohdan (AARON4IK)",
+    "email": "bohdanreva00@gmail.com"
   }
 }

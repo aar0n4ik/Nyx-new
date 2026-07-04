@@ -31,24 +31,11 @@
   "build": {
     "appId": "com.aaron4ik.nyx",
     "productName": "Nyx",
+    "asar": false,
     "files": [
       "**/*",
-      "!dist"
-    ],
-    "extraResources": [
-      {
-        "from": ".",
-        "to": "app",
-        "filter": [
-          "server.js",
-          "src/**",
-          "public/**",
-          "scripts/**",
-          "verify.js",
-          "package.json",
-          "models.lock"
-        ]
-      }
+      "!dist/**",
+      "!.git/**"
     ],
     "win": {
       "target": [

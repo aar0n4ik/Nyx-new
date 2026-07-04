@@ -500,3 +500,144 @@ async function checkModel() {
 checkModel()
 setInterval(checkModel, 20000)
 window.addEventListener("focus", checkModel)
+
+// ======================================================================
+// Nyx model picker — real on-device model selection (list / select / download)
+// Self-contained: injects its own button, modal and styles. Talks to
+// /api/model/list, /api/model/select, /api/model/download[/status].
+// ======================================================================
+;(function nyxModelPicker() {
+  const L = (() => { try { return localStorage.getItem("nyx.lang") || "en" } catch { return "en" } })()
+  const esc = (s) => String(s).replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]))
+  const DICT = {
+    en: { btn: "Models", title: "On-device model", sub: "Choose which model Nyx runs. Downloaded once, then fully offline — no cloud.", select: "Use", selected: "In use", download: "Download", downloading: "Downloading…", downloaded: "Downloaded", notAvail: "Not in this build", recommended: "Recommended", close: "Close", need: "needs", ram: "RAM", noSdk: "QVAC SDK not installed — run  npm run model  once, then reopen.", loading: "Loading…" },
+    ru: { btn: "Модели", title: "Модель на устройстве", sub: "Выберите, какую модель запускает Nyx. Скачивается один раз, дальше — полностью офлайн, без облака.", select: "Выбрать", selected: "Выбрана", download: "Скачать", downloading: "Скачивание…", downloaded: "Скачана", notAvail: "Нет в этой сборке", recommended: "Рекомендуется", close: "Закрыть", need: "нужно", ram: "ОЗУ", noSdk: "QVAC SDK не установлен — запусти один раз  npm run model  и открой снова.", loading: "Загрузка…" },
+    uk: { btn: "Моделі", title: "Модель на пристрої", sub: "Оберіть, яку модель запускає Nyx. Завантажується один раз, далі — повністю офлайн, без хмари.", select: "Обрати", selected: "Обрана", download: "Завантажити", downloading: "Завантаження…", downloaded: "Завантажена", notAvail: "Немає в цій збірці", recommended: "Рекомендовано", close: "Закрити", need: "потрібно", ram: "ОЗП", noSdk: "QVAC SDK не встановлено — запусти один раз  npm run model  і відкрий знову.", loading: "Завантаження…" },
+    es: { btn: "Modelos", title: "Modelo en el dispositivo", sub: "Elige qué modelo ejecuta Nyx. Se descarga una vez, luego totalmente offline, sin nube.", select: "Usar", selected: "En uso", download: "Descargar", downloading: "Descargando…", downloaded: "Descargado", notAvail: "No en esta versión", recommended: "Recomendado", close: "Cerrar", need: "necesita", ram: "RAM", noSdk: "QVAC SDK no instalado — ejecuta  npm run model  una vez y reabre.", loading: "Cargando…" },
+    de: { btn: "Modelle", title: "Modell auf dem Gerät", sub: "Wähle, welches Modell Nyx nutzt. Einmal geladen, danach komplett offline, ohne Cloud.", select: "Nutzen", selected: "Aktiv", download: "Laden", downloading: "Wird geladen…", downloaded: "Geladen", notAvail: "Nicht in diesem Build", recommended: "Empfohlen", close: "Schließen", need: "benötigt", ram: "RAM", noSdk: "QVAC SDK nicht installiert — einmal  npm run model  ausführen, dann neu öffnen.", loading: "Lädt…" },
+    fr: { btn: "Modèles", title: "Modèle sur l'appareil", sub: "Choisissez le modèle exécuté par Nyx. Téléchargé une fois, puis 100% hors ligne, sans cloud.", select: "Utiliser", selected: "Actif", download: "Télécharger", downloading: "Téléchargement…", downloaded: "Téléchargé", notAvail: "Absent de ce build", recommended: "Recommandé", close: "Fermer", need: "nécessite", ram: "RAM", noSdk: "QVAC SDK non installé — lancez  npm run model  une fois, puis rouvrez.", loading: "Chargement…" },
+  }
+  const d = DICT[L] || DICT.en
+
+  // styles
+  const st = document.createElement("style")
+  st.textContent = `
+.mp-btn{margin:0 14px 12px;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:600;color:var(--ink);box-shadow:var(--shadow);transition:.15s}
+.mp-btn:hover{border-color:var(--blue);color:var(--blue-deep);transform:translateY(-1px)}
+.mp-ov{display:none;position:fixed;inset:0;background:rgba(10,14,20,.45);z-index:60;align-items:center;justify-content:center;padding:18px}
+.mp-ov.show{display:flex}
+.mp-modal{background:#fff;border-radius:18px;max-width:560px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(16,40,80,.28);padding:22px}
+.mp-h{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
+.mp-h h2{margin:0;font-size:19px;letter-spacing:-.02em;flex:1}
+.mp-x{border:1px solid var(--line);background:#fff;border-radius:9px;width:34px;height:34px;font-size:15px}
+.mp-sub{color:var(--muted);font-size:13.5px;margin:0 0 16px;line-height:1.5}
+.mp-card{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;transition:.15s}
+.mp-card.sel{border-color:var(--blue);background:var(--blue-soft)}
+.mp-card.dis{opacity:.55}
+.mp-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mp-name{font-weight:700;font-size:15px}
+.mp-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--blue-soft);color:var(--blue-deep)}
+.mp-tag.ok{background:#eafaf1;color:#15803d}
+.mp-blurb{color:var(--muted);font-size:13px;margin:6px 0 10px;line-height:1.5}
+.mp-meta{font-size:12px;color:var(--muted);margin-bottom:10px}
+.mp-acts{display:flex;gap:8px;flex-wrap:wrap}
+.mp-b{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 13px;font-size:13px;font-weight:600;color:var(--ink);transition:.14s}
+.mp-b:hover{border-color:var(--blue);color:var(--blue-deep)}
+.mp-b.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
+.mp-b.pri:hover{color:#fff}
+.mp-b:disabled{opacity:.5;cursor:default}
+.mp-warn{font-size:13px;color:#9a3412;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:10px;margin-bottom:12px;line-height:1.5}
+`
+  document.head.appendChild(st)
+
+  // trigger button in the sidebar (right after "New chat")
+  const btn = document.createElement("button")
+  btn.className = "mp-btn"
+  btn.innerHTML = "🧩 " + esc(d.btn)
+  const nc = document.getElementById("newchat")
+  const side = document.getElementById("side")
+  if (nc && nc.parentNode) nc.parentNode.insertBefore(btn, nc.nextSibling)
+  else if (side) side.appendChild(btn)
+
+  // modal
+  const ov = document.createElement("div")
+  ov.className = "mp-ov"
+  ov.innerHTML = '<div class="mp-modal"><div class="mp-h"><h2>' + esc(d.title) + '</h2><button class="mp-x" title="' + esc(d.close) + '">✕</button></div><p class="mp-sub">' + esc(d.sub) + '</p><div class="mp-list"></div></div>'
+  document.body.appendChild(ov)
+  const listEl = ov.querySelector(".mp-list")
+  ov.querySelector(".mp-x").onclick = close
+  ov.onclick = (e) => { if (e.target === ov) close() }
+  btn.onclick = open
+
+  let polling = null
+  function open() { ov.classList.add("show"); load() }
+  function close() { ov.classList.remove("show"); if (polling) { clearInterval(polling); polling = null } }
+  function refreshBanner() { try { if (typeof checkModel === "function") checkModel() } catch (e) {} }
+
+  async function load() {
+    listEl.innerHTML = '<p class="mp-sub">' + esc(d.loading) + '</p>'
+    let data, s
+    try {
+      ;[data, s] = await Promise.all([
+        fetch("/api/model/list").then((r) => r.json()),
+        fetch("/api/model/download/status").then((r) => r.json()).catch(() => ({})),
+      ])
+    } catch (e) { listEl.innerHTML = '<div class="mp-warn">' + esc(d.noSdk) + '</div>'; return }
+    render(data, s || {})
+    if (s && s.active) startPoll()
+  }
+
+  function isDownloading(m, s) {
+    return !!(s && s.active && (s.id === m.id || (!s.id && m.selected)))
+  }
+
+  function render(data, s) {
+    let html = ""
+    if (!data.sdkInstalled) html += '<div class="mp-warn">' + esc(d.noSdk) + '</div>'
+    for (const m of data.models) {
+      const dis = !m.available
+      const dling = isDownloading(m, s)
+      const cls = "mp-card" + (m.selected ? " sel" : "") + (dis ? " dis" : "")
+      let tag = ""
+      if (m.recommended) tag += '<span class="mp-tag">★ ' + esc(d.recommended) + "</span>"
+      if (m.downloaded) tag += '<span class="mp-tag ok">' + esc(d.downloaded) + "</span>"
+      let acts = ""
+      if (dis) {
+        acts = '<span class="mp-b" style="pointer-events:none">' + esc(d.notAvail) + "</span>"
+      } else {
+        acts += m.selected
+          ? '<button class="mp-b pri" disabled>' + esc(d.selected) + "</button>"
+          : '<button class="mp-b pri" data-sel="' + esc(m.id) + '">' + esc(d.select) + "</button>"
+        if (dling) acts += '<button class="mp-b" disabled>' + esc(d.downloading) + "</button>"
+        else if (!m.downloaded) acts += '<button class="mp-b" data-dl="' + esc(m.id) + '">' + esc(d.download) + "</button>"
+      }
+      html += '<div class="' + cls + '">' +
+        '<div class="mp-top"><span class="mp-name">' + esc(m.label) + "</span>" + tag + "</div>" +
+        '<div class="mp-blurb">' + esc(m.blurb) + "</div>" +
+        '<div class="mp-meta">~' + esc(m.sizeGB) + " GB · " + esc(d.ram) + " " + esc(d.need) + " " + esc(m.minRamGB) + " GB</div>" +
+        '<div class="mp-acts">' + acts + "</div></div>"
+    }
+    listEl.innerHTML = html
+    listEl.querySelectorAll("[data-sel]").forEach((b) => (b.onclick = () => doSelect(b.getAttribute("data-sel"))))
+    listEl.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => doDownload(b.getAttribute("data-dl"))))
+  }
+
+  async function doSelect(id) {
+    try { await fetch("/api/model/select", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) }) } catch (e) {}
+    try { localStorage.setItem("nyx.model", id) } catch (e) {}
+    await load(); refreshBanner()
+  }
+  async function doDownload(id) {
+    try { await fetch("/api/model/download", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) }) } catch (e) {}
+    try { localStorage.setItem("nyx.model", id) } catch (e) {}
+    startPoll(); await load()
+  }
+  function startPoll() {
+    if (polling) return
+    polling = setInterval(async () => {
+      let s
+      try { s = await fetch("/api/model/download/status").then((r) => r.json()) } catch (e) { return }
+      if (!s || !s.active) { clearInterval(polling); polling = null; load(); refreshBanner() }
+    }, 4000)
+  }
+})()

@@ -31,24 +31,35 @@
   "build": {
     "appId": "com.aaron4ik.nyx",
     "productName": "Nyx",
+    "copyright": "© 2026 Bohdan (AARON4IK)",
     "asar": false,
+    "compression": "maximum",
     "files": [
-      "**/*",
-      "!dist/**",
-      "!.git/**"
+      "electron/**/*",
+      "public/**/*",
+      "src/**/*",
+      "scripts/**/*",
+      "server.js",
+      "verify.js",
+      "cli.js",
+      "remote-apis.json",
+      "package.json"
     ],
     "win": {
-      "target": [
-        "nsis"
-      ],
+      "target": ["nsis"],
+      "icon": "build/icon.ico",
       "artifactName": "Nyx-Setup-${version}.exe"
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
+      "oneClick": true,
+      "perMachine": false,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "runAfterFinish": true
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
     }
   },
   "author": {

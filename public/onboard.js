@@ -1,6 +1,7 @@
 const $ = (s) => document.querySelector(s)
 const steps = {
 	detect: $("#step-detect"),
+	hero: $("#step-hero"),
 	choose: $("#step-choose"),
 	download: $("#step-download"),
 	done: $("#step-done"),
@@ -18,9 +19,10 @@ function fmtEta(s) {
 }
 
 let catalog = null
+let recoTier = null
 let chosen = null
-let showAll = false
 
+// Принцип: клиенту не надо думать. Авто-детект -> одна рекомендация -> одна кнопка.
 async function init() {
 	show("detect")
 	try {
@@ -28,27 +30,47 @@ async function init() {
 		catalog = r.catalog
 		const hw = r.hardware
 		const reco = r.recommend
-		$("#detect-text").textContent = `${hw.totalRamGB} ГБ ОЗУ · ${hw.cpuCores} ядер${hw.vramGB ? ` · видеокарта ${hw.vramGB} ГБ` : " · без дискретной видеокарты"}`
-		setTimeout(() => renderChoose(reco), 700)
+		recoTier = catalog.tiers.find((t) => t.id === reco.tier) || catalog.tiers[0]
+		$("#detect-text").textContent = "Готово"
+		$("#hero-hw").textContent = `${hw.totalRamGB} ГБ ОЗУ${hw.vramGB ? ` · GPU ${hw.vramGB} ГБ` : ""}`
+		setTimeout(() => renderHero(reco), 650)
 	} catch (e) {
-		$("#detect-text").textContent = "Не удалось определить железо. Показываем все варианты."
 		try {
 			catalog = await fetch("/api/onboard/catalog").then((x) => x.json())
-			setTimeout(() => renderChoose({ tier: catalog.default }), 700)
-		} catch {}
+			recoTier = catalog.tiers.find((t) => t.id === catalog.default) || catalog.tiers[0]
+			setTimeout(() => renderHero({ reason: "" }), 650)
+		} catch {
+			$("#detect-text").textContent = "Не удалось загрузить каталог моделей. Проверьте интернет и перезапустите."
+		}
 	}
 }
 
-function renderChoose(reco) {
+function renderHero(reco) {
+	show("hero")
+	const t = recoTier
+	$("#hero-reason").textContent =
+		reco.reason || "Мы подобрали оптимальную модель — нажмите «Начать», остальное сделаем сами."
+	$("#hero-card").innerHTML = `
+		<div class="emoji">${t.emoji || "🧠"}</div>
+		<div class="body">
+			<div class="title">${t.display}<span class="tag-reco">Подобрано для вас</span></div>
+			<div class="subtitle">${t.subtitle || ""}</div>
+			<div class="badges">${(t.badges || []).map((b) => `<span class="badge">${b}</span>`).join("")}</div>
+		</div>`
+}
+
+$("#hero-start").onclick = () => startDownload(recoTier)
+$("#show-more").onclick = () => renderChoose()
+$("#back-hero").onclick = () => show("hero")
+
+function renderChoose() {
 	show("choose")
-	const recoTier = catalog.tiers.find((t) => t.id === reco.tier) || catalog.tiers[0]
-	$("#reco-line").textContent = reco.reason || "Мы подобрали оптимальный вариант для вашего ПК."
 	const cards = $("#cards")
 	cards.innerHTML = ""
 	for (const t of catalog.tiers) {
 		const isReco = t.id === recoTier.id
 		const el = document.createElement("button")
-		el.className = "card" + (isReco ? " reco" : "") + (isReco || showAll ? "" : " hiddenTier")
+		el.className = "card" + (isReco ? " reco" : "")
 		el.style.setProperty("--accent", t.accent || "#d97706")
 		el.innerHTML = `
 			<div class="emoji">${t.emoji || "🧠"}</div>
@@ -60,14 +82,6 @@ function renderChoose(reco) {
 		el.onclick = () => startDownload(t)
 		cards.appendChild(el)
 	}
-	$("#toggle-all").textContent = showAll ? "Скрыть остальные" : "Показать все варианты"
-}
-$("#toggle-all").onclick = () => {
-	showAll = !showAll
-	document.querySelectorAll(".card").forEach((c, i) => {
-		if (!c.classList.contains("reco")) c.classList.toggle("hiddenTier", !showAll)
-	})
-	$("#toggle-all").textContent = showAll ? "Скрыть остальные" : "Показать все варианты"
 }
 
 let poll = null
@@ -75,11 +89,14 @@ async function startDownload(tier) {
 	chosen = tier
 	show("download")
 	$("#dl-model").textContent = `${tier.display} · ${tier.badges?.[0] || fmtGB(tier.bytes)}`
-	await fetch("/api/model/download", {
-		method: "POST",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ model: tier.model, tier: tier.id }),
-	})
+	try {
+		await fetch("/api/model/download", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ model: tier.model, tier: tier.id }),
+		})
+	} catch {}
+	togglePause(false)
 	startPolling()
 }
 
@@ -139,7 +156,7 @@ $("#btn-resume").onclick = async () => {
 $("#btn-cancel").onclick = async () => {
 	await fetch("/api/model/download/cancel", { method: "POST" })
 	clearInterval(poll)
-	renderChoose({ tier: chosen?.id || catalog.default })
+	show("hero")
 }
 $("#btn-launch").onclick = () => {
 	location.href = "/app"

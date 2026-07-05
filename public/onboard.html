@@ -9,23 +9,37 @@
 <body>
 	<div class="drag"></div>
 	<main class="wrap">
-		<!-- Шаг 1: приветствие + детект железа -->
+		<!-- Шаг 1: приветствие + авто-детект железа -->
 		<section id="step-detect" class="step active">
 			<div class="logo">Nyx</div>
 			<h1>Добро пожаловать</h1>
-			<p class="sub">Ваш личный ИИ — полностью на вашем компьютере. Без облака, без отправки данных.</p>
+			<p class="sub">Ваш личный ИИ — полностью на вашем компьютере. Без облака, без аккаунтов, без отправки данных.</p>
 			<div class="detect-card">
 				<div class="spinner"></div>
-				<div id="detect-text">Анализируем ваш компьютер…</div>
+				<div id="detect-text">Подбираем лучшую модель под ваш компьютер…</div>
 			</div>
 		</section>
 
-		<!-- Шаг 2: выбор модели -->
+		<!-- Шаг 2 (ГЛАВНЫЙ): одна рекомендация + одна кнопка -->
+		<section id="step-hero" class="step">
+			<div class="logo">Nyx</div>
+			<h1>Готово к запуску</h1>
+			<p class="sub" id="hero-reason"></p>
+			<div id="hero-card" class="hero-card"></div>
+			<button id="hero-start" class="btn-primary big">Начать</button>
+			<div class="hero-foot">
+				<button id="show-more" class="link-btn">Выбрать другую модель</button>
+				<span class="dot">·</span>
+				<span id="hero-hw" class="muted-inline"></span>
+			</div>
+		</section>
+
+		<!-- Шаг 2b: ручной выбор (скрытый путь для меньшинства) -->
 		<section id="step-choose" class="step">
-			<h1>Выберите модель</h1>
-			<p class="sub" id="reco-line"></p>
+			<button id="back-hero" class="link-btn back">← Назад</button>
+			<h1>Все модели</h1>
+			<p class="sub">Можно сменить в любой момент позже — в настройках приложения.</p>
 			<div id="cards" class="cards"></div>
-			<button id="toggle-all" class="link-btn">Показать все варианты</button>
 		</section>
 
 		<!-- Шаг 3: загрузка -->
@@ -45,14 +59,15 @@
 				<button id="btn-resume" class="btn-ghost hidden">Продолжить</button>
 				<button id="btn-cancel" class="btn-ghost danger">Отмена</button>
 			</div>
+			<p class="hint">Можно свернуть окно — загрузка продолжится, а прогресс виден в панели задач. При обрыве сети загрузка продолжится с того же места.</p>
 		</section>
 
 		<!-- Шаг 4: готово -->
 		<section id="step-done" class="step">
 			<div class="check">✓</div>
 			<h1>Всё готово</h1>
-			<p class="sub">Модель установлена и готова к работе локально.</p>
-			<button id="btn-launch" class="btn-primary">Открыть Nyx</button>
+			<p class="sub">Модель установлена и работает локально. Модель можно сменить в любой момент в настройках.</p>
+			<button id="btn-launch" class="btn-primary big">Открыть Nyx</button>
 		</section>
 	</main>
 	<script src="/onboard.js"></script>

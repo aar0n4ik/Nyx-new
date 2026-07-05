@@ -1,213 +1,244 @@
-import "./src/netguard.js"
-import { createServer } from "node:http"
+import http from "node:http"
 import { readFileSync, existsSync } from "node:fs"
-import { extname } from "node:path"
-import { spawn } from "node:child_process"
-import { answer } from "./src/agents.js"
-import { market } from "./src/integrations/bitfinex.js"
-import { step as brokerStep, reset as brokerReset } from "./src/trade/broker.js"
-import { sizePosition, gradeTrade } from "./src/trade/calculator.js"
-import { collectSpecs, bitfinexLatency, preTradeRisk } from "./src/system/specs.js"
-import { openSettings, startWindowsUpdateScan } from "./src/system/windows.js"
-import { listKeys, publicStatus, removeKey } from "./src/security/vault.js"
-import { status as llmStatus } from "./src/llm/engine.js"
+import { fileURLToPath } from "node:url"
+import { dirname, join, extname } from "node:path"
+
 import { modelStatus, switchModel } from "./src/qvac.js"
 import { listModels } from "./src/modelRegistry.js"
 import { ensureLocalSetup } from "./src/firstrun.js"
-import { diagnose } from "./src/agent/diagnose.js"
-import { runScript } from "./src/shell/connector.js"
-import * as solutionCache from "./src/shell/solutionCache.js"
-import { rateLimit } from "./src/util/guard.js"
-import { PLAYBOOKS, matchPlaybook } from "./src/agent/playbooks.js"
+import "./src/netguard.js"
+import { detectHardware, recommend } from "./src/system/detectHardware.js"
+import { getCatalog, findEntry, defaultEntry } from "./src/modelCatalog.js"
+import { downloadModel } from "./src/downloader/modelDownloader.js"
+import { readConfig, writeConfig, ensureDirs } from "./src/paths.js"
 
+const HERE = dirname(fileURLToPath(import.meta.url))
+const PUBLIC = join(HERE, "public")
 const PORT = process.env.NYX_PORT || 3000
 
-// First-run convenience so Nyx is runnable out-of-the-box for judges: generate
-// PoLI signing keys and build the local RAG index if missing. Idempotent, fully
-// offline, best-effort — it never blocks startup.
-ensureLocalSetup()
+ensureDirs()
 
+// ——— Состояние загрузки (одна активная загрузка за раз) ———
+const dl = {
+	active: false,
+	modelId: null,
+	phase: "idle", // idle|downloading|verify|linking|retry|done|error|canceled
+	pct: 0,
+	done: 0,
+	total: 0,
+	speed: 0,
+	etaSec: null,
+	error: null,
+	ctrl: null,
+}
+
+function dlSnapshot() {
+	const { ctrl, ...rest } = dl
+	return rest
+}
+
+async function resolveEntry(idOrModel) {
+	const catalog = await getCatalog()
+	if (!idOrModel) return defaultEntry(catalog)
+	return findEntry(catalog, idOrModel) || defaultEntry(catalog)
+}
+
+async function startDownload(idOrModel) {
+	if (dl.active) return { ok: false, error: "Загрузка уже идёт" }
+	const entry = await resolveEntry(idOrModel)
+	if (!entry) return { ok: false, error: "Модель не найдена в каталоге" }
+	const ctrl = new AbortController()
+	Object.assign(dl, {
+		active: true,
+		modelId: entry.model || entry.id,
+		phase: "downloading",
+		pct: 0,
+		done: 0,
+		total: entry.bytes || 0,
+		speed: 0,
+		etaSec: null,
+		error: null,
+		ctrl,
+	})
+	downloadModel(entry, {
+		signal: ctrl.signal,
+		onProgress: (p) => {
+			if (p.phase) dl.phase = p.phase
+			if (typeof p.pct === "number") dl.pct = p.pct
+			if (typeof p.done === "number") dl.done = p.done
+			if (typeof p.total === "number" && p.total) dl.total = p.total
+			if (typeof p.speed === "number") dl.speed = p.speed
+			if (p.etaSec !== undefined) dl.etaSec = p.etaSec
+			if (p.error) dl.error = p.error
+		},
+	})
+		.then((res) => {
+			dl.phase = "done"
+			dl.pct = 1
+			dl.active = false
+			// Сохраняем выбор в ~/.nyx/config.json (не через switchModel — id каталога может не совпадать с registry).
+			writeConfig({
+				onboarded: true,
+				selectedModel: dl.modelId,
+				modelPath: res?.path || null,
+				modelSha256: res?.sha256 || null,
+			})
+		})
+		.catch((e) => {
+			dl.active = false
+			if (dl.ctrl?.signal.aborted) {
+				dl.phase = "canceled"
+			} else {
+				dl.phase = "error"
+				dl.error = String(e?.message || e)
+			}
+		})
+	return { ok: true }
+}
+
+// ——— Хелперы ———
 const MIME = {
-".html": "text/html; charset=utf-8",
-".css": "text/css; charset=utf-8",
-".js": "text/javascript; charset=utf-8",
-".svg": "image/svg+xml",
-".json": "application/json; charset=utf-8",
+	".html": "text/html; charset=utf-8",
+	".css": "text/css; charset=utf-8",
+	".js": "text/javascript; charset=utf-8",
+	".json": "application/json; charset=utf-8",
+	".svg": "image/svg+xml",
+	".png": "image/png",
+	".woff2": "font/woff2",
 }
 
-function json(res, code, obj) {
-res.statusCode = code
-res.setHeader("content-type", "application/json; charset=utf-8")
-res.end(JSON.stringify(obj))
+function sendJson(res, code, obj) {
+	const body = JSON.stringify(obj)
+	res.writeHead(code, { "content-type": "application/json; charset=utf-8" })
+	res.end(body)
 }
 
-function sendFile(res, path) {
-res.setHeader("content-type", MIME[extname(path)] || "application/octet-stream")
-res.end(readFileSync(path))
+function sendFile(res, file) {
+	if (!existsSync(file)) {
+		res.writeHead(404)
+		res.end("Not found")
+		return
+	}
+	res.writeHead(200, { "content-type": MIME[extname(file)] || "application/octet-stream" })
+	res.end(readFileSync(file))
 }
 
 async function readBody(req) {
-let body = ""
-for await (const c of req) body += c
-try { return JSON.parse(body || "{}") } catch { return {} }
+	const chunks = []
+	for await (const c of req) chunks.push(c)
+	if (!chunks.length) return {}
+	try {
+		return JSON.parse(Buffer.concat(chunks).toString("utf8"))
+	} catch {
+		return {}
+	}
 }
 
-// --- Background model download manager --------------------------------------
-// Kicks off scripts/setup-models.js (which downloads + caches the SELECTED model
-// via the QVAC SDK) without blocking the request. The UI reflects real progress
-// by polling /api/model/list (honest on-disk scan) + this status object.
-let dl = { active: false, id: null, startedAt: null, done: false, error: null, log: "" }
-function startDownload(id) {
-if (dl.active) return dl
-dl = { active: true, id: id || null, startedAt: Date.now(), done: false, error: null, log: "" }
-try {
-const child = spawn(process.execPath, ["scripts/setup-models.js"], { env: { ...process.env } })
-child.stdout.on("data", (b) => { dl.log = (dl.log + b).slice(-4000) })
-child.stderr.on("data", (b) => { dl.log = (dl.log + b).slice(-4000) })
-child.on("close", (code) => { dl.active = false; dl.done = code === 0; if (code !== 0 && !dl.error) dl.error = "exit " + code })
-child.on("error", (e) => { dl.active = false; dl.error = String(e?.message || e) })
-} catch (e) {
-dl.active = false; dl.error = String(e?.message || e)
-}
-return dl
-}
-
-createServer(async (req, res) => {
-try {
-const url = new URL(req.url, "http://localhost")
-const path = url.pathname
-
-// Rate-limit the API surface (per client) to keep the local service alive.
-if (path.startsWith("/api/")) {
-const who = req.socket.remoteAddress || "local"
-const rl = rateLimit(who, { max: Number(process.env.NYX_RATE_MAX || 60), windowMs: 60000 })
-if (!rl.ok) return json(res, 429, { error: "Слишком много запросов, подождите", resetMs: rl.resetMs })
+// Простой rate-limit для API.
+const hits = new Map()
+function rateLimit(req, res) {
+	const ip = req.socket.remoteAddress || "local"
+	const now = Date.now()
+	const rec = hits.get(ip) || { n: 0, t: now }
+	if (now - rec.t > 10000) {
+		rec.n = 0
+		rec.t = now
+	}
+	rec.n++
+	hits.set(ip, rec)
+	if (rec.n > 200) {
+		sendJson(res, 429, { error: "Слишком много запросов" })
+		return false
+	}
+	return true
 }
 
-// --- Static / pages ---
-if (req.method === "GET" && (path === "/" )) {
-return existsSync("public/index.html")
-? sendFile(res, "public/index.html")
-: json(res, 200, { ok: true, hint: 'POST /api/chat { "q": "..." }' })
-}
-if (req.method === "GET" && (path === "/app" || path === "/app.html")) {
-return existsSync("public/app.html") ? sendFile(res, "public/app.html") : json(res, 404, { error: "app not built" })
-}
-if (req.method === "GET" && /^\/(app\.css|app\.js)$/.test(path)) {
-const f = "public" + path
-return existsSync(f) ? sendFile(res, f) : json(res, 404, { error: "not found" })
-}
+const server = http.createServer(async (req, res) => {
+	try {
+		const u = new URL(req.url, `http://localhost:${PORT}`)
+		const p = u.pathname
 
-// --- Market (public) ---
-if (req.method === "GET" && path === "/api/market") {
-return json(res, 200, { market: await market(["BTC", "ETH", "SOL"]) })
-}
+		// ——— Статика / страницы ———
+		if (p === "/" || p === "/app") return sendFile(res, join(PUBLIC, "app.html"))
+		if (p === "/app.css") return sendFile(res, join(PUBLIC, "app.css"))
+		if (p === "/app.js") return sendFile(res, join(PUBLIC, "app.js"))
+		if (p === "/onboard") return sendFile(res, join(PUBLIC, "onboard.html"))
+		if (p === "/onboard.css") return sendFile(res, join(PUBLIC, "onboard.css"))
+		if (p === "/onboard.js") return sendFile(res, join(PUBLIC, "onboard.js"))
 
-// --- System / PC infrastructure ---
-if (req.method === "GET" && path === "/api/system/specs") {
-const specs = await collectSpecs()
-const latency = await bitfinexLatency()
-return json(res, 200, { specs, latency, risk: preTradeRisk(specs, latency) })
-}
-if (req.method === "GET" && path === "/api/system/latency") {
-return json(res, 200, await bitfinexLatency())
-}
-if (req.method === "POST" && path === "/api/system/open-settings") {
-const { pane } = await readBody(req)
-return json(res, 200, await openSettings(pane || ""))
-}
-if (req.method === "POST" && path === "/api/system/update") {
-return json(res, 200, await startWindowsUpdateScan())
-}
+		if (!rateLimit(req, res)) return
 
-// --- Trade calculator (manual assist, no keys needed) ---
-if (req.method === "POST" && path === "/api/trade/calc") {
-const p = await readBody(req)
-try { const calc = sizePosition(p); return json(res, 200, { calc, grade: gradeTrade(calc) }) }
-catch (e) { return json(res, 400, { error: String(e.message) }) }
-}
+		// ——— Onboarding API ———
+		if (p === "/api/onboard/recommend" && req.method === "GET") {
+			const [hw, catalog] = await Promise.all([detectHardware(), getCatalog()])
+			return sendJson(res, 200, { hardware: hw, recommend: recommend(catalog, hw), catalog })
+		}
+		if (p === "/api/onboard/catalog" && req.method === "GET") {
+			return sendJson(res, 200, await getCatalog())
+		}
+		if (p === "/api/onboard/state" && req.method === "GET") {
+			return sendJson(res, 200, readConfig())
+		}
 
-// --- Keys (status only; secrets never returned) ---
-if (req.method === "GET" && path === "/api/keys") return json(res, 200, { keys: listKeys() })
-if (req.method === "POST" && path === "/api/keys/remove") {
-const { keyRef } = await readBody(req); removeKey(keyRef); return json(res, 200, { ok: true })
-}
+		// ——— Model download API ———
+		if (p === "/api/model/download" && req.method === "POST") {
+			const body = await readBody(req)
+			const r = await startDownload(body.model || body.id || body.tier)
+			return sendJson(res, r.ok ? 200 : 409, r)
+		}
+		if (p === "/api/model/download/status" && req.method === "GET") {
+			return sendJson(res, 200, dlSnapshot())
+		}
+		if (p === "/api/model/download/cancel" && req.method === "POST") {
+			if (dl.ctrl) dl.ctrl.abort()
+			return sendJson(res, 200, { ok: true })
+		}
+		if (p === "/api/model/download/pause" && req.method === "POST") {
+			// Пауза = отмена текущего потока; .part остаётся, resume докачает через Range.
+			if (dl.ctrl) dl.ctrl.abort()
+			dl.phase = "paused"
+			return sendJson(res, 200, { ok: true })
+		}
+		if (p === "/api/model/download/resume" && req.method === "POST") {
+			const r = await startDownload(dl.modelId)
+			return sendJson(res, r.ok ? 200 : 409, r)
+		}
 
-// --- Hybrid LLM status (online/offline provider) ---
-if (req.method === "GET" && path === "/api/llm/status") {
-return json(res, 200, await llmStatus())
-}
+		// ——— Существующие модельные роуты ———
+		if (p === "/api/model/status" && req.method === "GET") {
+			return sendJson(res, 200, await modelStatus())
+		}
+		if (p === "/api/model/list" && req.method === "GET") {
+			return sendJson(res, 200, { models: listModels() })
+		}
+		if (p === "/api/model/select" && req.method === "POST") {
+			const body = await readBody(req)
+			try {
+				await switchModel(body.id)
+				return sendJson(res, 200, { ok: true })
+			} catch (e) {
+				return sendJson(res, 400, { ok: false, error: String(e?.message || e) })
+			}
+		}
 
-// --- On-device model status (is the offline model downloaded & ready?) ---
-if (req.method === "GET" && path === "/api/model/status") {
-return json(res, 200, modelStatus())
-}
+		// ——— Система ———
+		if (p === "/api/system/hardware" && req.method === "GET") {
+			return sendJson(res, 200, await detectHardware())
+		}
 
-// --- On-device model catalog (real: SDK-exposed + on-disk + selected) ---
-if (req.method === "GET" && path === "/api/model/list") {
-return json(res, 200, listModels())
-}
-// --- Select a model (persists choice, unloads current one) ---
-if (req.method === "POST" && path === "/api/model/select") {
-const { id } = await readBody(req)
-if (!id) return json(res, 400, { error: "id обязателен" })
-try { return json(res, 200, await switchModel(id)) }
-catch (e) { return json(res, 400, { error: String(e?.message || e) }) }
-}
-// --- Download the selected (or given) model in the background ---
-if (req.method === "POST" && path === "/api/model/download") {
-const { id } = await readBody(req)
-try {
-if (id) await switchModel(id)
-const st = startDownload(id || null)
-return json(res, 200, { ok: true, active: st.active, id: st.id, error: st.error })
-} catch (e) { return json(res, 400, { error: String(e?.message || e) }) }
-}
-// --- Download progress (best-effort log tail) ---
-if (req.method === "GET" && path === "/api/model/download/status") {
-return json(res, 200, dl)
-}
+		// ——— Первичная настройка окружения ———
+		if (p === "/api/setup/ensure" && req.method === "POST") {
+			await ensureLocalSetup()
+			return sendJson(res, 200, { ok: true })
+		}
 
-// --- Universal dynamic shell agent (any PC problem; no hardcoded tasks) ---
-if (req.method === "POST" && path === "/api/agent/diagnose") {
-const { problem, os, lang, execute, confirm, wantFix } = await readBody(req)
-if (!problem) return json(res, 400, { error: "problem обязателен" })
-return json(res, 200, await diagnose(problem, { os, lang, execute: !!execute, confirm: !!confirm, wantFix: !!wantFix }))
-}
-if (req.method === "GET" && path === "/api/agent/playbooks") {
-const q = url.searchParams.get("q")
-if (q) return json(res, 200, { match: matchPlaybook(q) })
-return json(res, 200, { playbooks: PLAYBOOKS.map((p) => ({ id: p.id, title: p.title, os: p.os, risk: p.risk })) })
-}
-if (req.method === "POST" && path === "/api/agent/exec") {
-const { script, shell, confirm } = await readBody(req)
-if (!script) return json(res, 400, { error: "script обязателен" })
-return json(res, 200, await runScript(script, { shell, confirm: !!confirm }))
-}
-if (req.method === "GET" && path === "/api/agent/cache") {
-return json(res, 200, solutionCache.stats())
-}
+		res.writeHead(404)
+		res.end("Not found")
+	} catch (e) {
+		sendJson(res, 500, { error: String(e?.message || e) })
+	}
+})
 
-// --- Zero-Trust broker chat (per-chat state machine) ---
-if (req.method === "POST" && path === "/api/chat") {
-const { q, lang, chatId, history } = await readBody(req)
-const id = chatId || "default"
-// 1) Broker safety rail first (trade flow). If it handles, return that.
-const broker = await brokerStep(id, q || "", lang)
-if (broker.handled) {
-const det = await import("./src/lang.js").then((m) => m.detectLang)
-return json(res, 200, { text: broker.text, lang: lang || det(q || ""), mode: "broker:" + broker.state, data: broker.data || null, sources: ["Bitfinex", "Tether WDK"] })
-}
-// 2) Otherwise the free-form AI answers (local brain / LLM).
-const result = await answer(q || "", { lang, history })
-return json(res, 200, result)
-}
-if (req.method === "POST" && path === "/api/chat/reset") {
-const { chatId } = await readBody(req); brokerReset(chatId || "default"); return json(res, 200, { ok: true })
-}
-
-json(res, 404, { error: "not found" })
-} catch (e) {
-json(res, 500, { error: String(e?.message || e) })
-}
-}).listen(PORT, () => console.log(`Nyx running on http://localhost:${PORT}  (app: /app)`))
+server.listen(PORT, () => {
+	console.log(`[nyx] server on http://localhost:${PORT}`)
+})

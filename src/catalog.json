@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "updated": "2026-07-05",
+  "tiers": [
+    {
+      "id": "light",
+      "badge": "🟢 Лёгкая",
+      "title": "Быстрая и лёгкая",
+      "human": "Работает почти на любом ноутбуке. Требуется 4–8 ГБ ОЗУ. Идеальна, если нет мощной видеокарты.",
+      "model": "qwen3.5-2b-instruct",
+      "display": "Nyx Lite (2B)",
+      "sizeGB": 1.4,
+      "minRamGB": 4,
+      "needsGPU": false,
+      "fallback": "llama-3.2-3b-instruct"
+    },
+    {
+      "id": "balanced",
+      "badge": "🟡 Сбалансированная",
+      "title": "Рекомендуем большинству",
+      "human": "Лучший баланс скорости и ума. Требуется 8 ГБ ОЗУ. Идеальна для повседневных задач и работы с инструментами.",
+      "model": "qwen3.5-4b-instruct",
+      "display": "Nyx Balanced (4B)",
+      "sizeGB": 2.5,
+      "minRamGB": 8,
+      "needsGPU": false,
+      "recommended": true,
+      "fallback": "phi-4-mini-instruct"
+    },
+    {
+      "id": "strong",
+      "badge": "🟠 Мощная",
+      "title": "Для сложных задач",
+      "human": "Заметно умнее в рассуждениях и коде. Требуется 16 ГБ ОЗУ (или видеокарта с 8 ГБ). Для серьёзной работы.",
+      "model": "llama-3.1-8b-instruct",
+      "display": "Nyx Pro (8B)",
+      "sizeGB": 4.9,
+      "minRamGB": 16,
+      "needsGPU": false,
+      "fallback": "qwen3.5-4b-instruct"
+    },
+    {
+      "id": "max",
+      "badge": "🔴 Максимум",
+      "title": "Для мощных станций",
+      "human": "Максимальное качество ответов. Нужна сильная видеокарта (24 ГБ VRAM). Для энтузиастов и профи.",
+      "model": "qwen3.5-32b-instruct",
+      "display": "Nyx Max (32B)",
+      "sizeGB": 18,
+      "minRamGB": 32,
+      "needsGPU": true,
+      "fallback": "llama-3.1-8b-instruct"
+    }
+  ]
+}

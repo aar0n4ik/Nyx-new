@@ -1,0 +1,11 @@
+{
+	"version": "0.2.0",
+	"channel": "stable",
+	"win": {
+		"key": "win/Nyx-Setup-0.2.0.exe",
+		"filename": "Nyx-Setup-0.2.0.exe",
+		"sha256": null,
+		"sizeBytes": null
+	},
+	"notes": "Первый онбординг-релиз: лёгкий установщик, выбор модели и докачиваемая загрузка внутри приложения."
+}

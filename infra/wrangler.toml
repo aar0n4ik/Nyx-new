@@ -1,0 +1,13 @@
+name = "nyx-download"
+main = "download-worker.js"
+compatibility_date = "2026-01-01"
+
+# Привязка к домену get.nyx.app (настройте в Cloudflare Dashboard → Workers Routes).
+routes = [
+	{ pattern = "get.nyx.app/*", zone_name = "nyx.app" }
+]
+
+# R2 bucket с релизами: заливайте туда Nyx-Setup-<ver>.exe и latest.json.
+[[r2_buckets]]
+binding = "NYX_RELEASES"
+bucket_name = "nyx-releases"

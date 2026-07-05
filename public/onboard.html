@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Nyx — настройка</title>
+	<link rel="stylesheet" href="/onboard.css" />
+</head>
+<body>
+	<div class="drag"></div>
+	<main class="wrap">
+		<!-- Шаг 1: приветствие + детект железа -->
+		<section id="step-detect" class="step active">
+			<div class="logo">Nyx</div>
+			<h1>Добро пожаловать</h1>
+			<p class="sub">Ваш личный ИИ — полностью на вашем компьютере. Без облака, без отправки данных.</p>
+			<div class="detect-card">
+				<div class="spinner"></div>
+				<div id="detect-text">Анализируем ваш компьютер…</div>
+			</div>
+		</section>
+
+		<!-- Шаг 2: выбор модели -->
+		<section id="step-choose" class="step">
+			<h1>Выберите модель</h1>
+			<p class="sub" id="reco-line"></p>
+			<div id="cards" class="cards"></div>
+			<button id="toggle-all" class="link-btn">Показать все варианты</button>
+		</section>
+
+		<!-- Шаг 3: загрузка -->
+		<section id="step-download" class="step">
+			<h1 id="dl-title">Загружаем модель</h1>
+			<p class="sub" id="dl-model"></p>
+			<div class="progress"><div id="bar" class="bar"></div></div>
+			<div class="dl-meta">
+				<span id="dl-pct">0%</span>
+				<span id="dl-size"></span>
+				<span id="dl-speed"></span>
+				<span id="dl-eta"></span>
+			</div>
+			<div id="dl-phase" class="phase"></div>
+			<div class="dl-actions">
+				<button id="btn-pause" class="btn-ghost">Пауза</button>
+				<button id="btn-resume" class="btn-ghost hidden">Продолжить</button>
+				<button id="btn-cancel" class="btn-ghost danger">Отмена</button>
+			</div>
+		</section>
+
+		<!-- Шаг 4: готово -->
+		<section id="step-done" class="step">
+			<div class="check">✓</div>
+			<h1>Всё готово</h1>
+			<p class="sub">Модель установлена и готова к работе локально.</p>
+			<button id="btn-launch" class="btn-primary">Открыть Nyx</button>
+		</section>
+	</main>
+	<script src="/onboard.js"></script>
+</body>
+</html>

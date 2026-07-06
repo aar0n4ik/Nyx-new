@@ -29,6 +29,7 @@ const PLAT =
 const ARCH = process.arch
 const REPO = process.env.NYX_ENGINE_REPO || "aar0n4ik/Nyx-new"
 const ASSET = `nyx-engine-${PLAT}-${ARCH}.tar.gz`
+const GH_BASE = "https://" + "github.com/" + REPO
 
 function appVersion() {
 	if (process.env.NYX_VERSION) return process.env.NYX_VERSION
@@ -44,8 +45,8 @@ const VERSION = appVersion()
 export const ENGINE_URL =
 	process.env.NYX_ENGINE_URL ||
 	(VERSION && VERSION !== "0.0.0"
-		? `https://github.com/${REPO}/releases/download/v${VERSION}/${ASSET}`
-		: `https://github.com/${REPO}/releases/latest/download/${ASSET}`)
+		? `${GH_BASE}/releases/download/v${VERSION}/${ASSET}`
+		: `${GH_BASE}/releases/latest/download/${ASSET}`)
 
 let state = {
 	active: false,

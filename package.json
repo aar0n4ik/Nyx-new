@@ -25,7 +25,7 @@
 		"directories": { "buildResources": "build", "output": "dist" },
 		"win": {
 			"target": ["nsis"],
-			"artifactName": "Nyx-Setup-${version}.exe",
+			"artifactName": "Nyx-Setup.exe",
 			"signtoolOptions": {
 				"signingHashAlgorithms": ["sha256"]
 			}

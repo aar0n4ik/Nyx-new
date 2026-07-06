@@ -171,8 +171,10 @@ section.alt{background:var(--nyx-soft);border-top:1px solid var(--nyx-line);bord
 .foot-dev .foot-socials{display:flex;gap:12px;margin-top:12px}
 .fsoc{display:grid;place-items:center;width:46px;height:46px;border-radius:13px;color:#374151;background:#fff;border:1px solid var(--nyx-line);text-decoration:none;transition:.16s}
 .fsoc:hover{transform:translateY(-3px);color:var(--nyx-blue);border-color:var(--nyx-blue);box-shadow:0 10px 26px rgba(39,131,222,.2)}
-.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
+.reveal{opacity:1;transform:none;transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
 .reveal.in{opacity:1;transform:none}
+.js .reveal{opacity:0;transform:translateY(18px)}
+.js .reveal.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.btn:hover{transform:none}}
 @media(max-width:860px){.socials{display:none}.lang-global{padding:6px 8px}}
 /* ===== NYX brand logo ===== */

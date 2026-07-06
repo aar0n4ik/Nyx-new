@@ -2,6 +2,10 @@
 	"name": "nyx",
 	"version": "0.2.0",
 	"description": "Nyx — полностью локальный, автономный и безопасный ИИ-агент (Edge AI), на движке QVAC (Tether).",
+	"author": {
+		"name": "Bohdan Reva",
+		"email": "bohdanreva00@gmail.com"
+	},
 	"type": "module",
 	"main": "electron/main.cjs",
 	"scripts": {

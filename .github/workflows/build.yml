@@ -15,8 +15,16 @@ jobs:
           node-version: '22'
       - run: npm install
       - run: npm run dist
+      - name: Prune to production deps
+        shell: bash
+        run: npm prune --omit=dev
+      - name: Package engine (node_modules)
+        shell: bash
+        run: tar -czf nyx-engine-win-x64.tar.gz node_modules
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.exe
+          files: |
+            dist/*.exe
+            nyx-engine-win-x64.tar.gz

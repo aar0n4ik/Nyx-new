@@ -12,12 +12,16 @@ import { getCatalog, findEntry, defaultEntry } from "./src/modelCatalog.js"
 import { downloadModel } from "./src/downloader/modelDownloader.js"
 import { readConfig, writeConfig, ensureDirs, modelLink, blobPath } from "./src/paths.js"
 import { listInstalled } from "./src/installedModels.js"
+import { ensureEngine, engineStatus } from "./src/engine/engine.js"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const PUBLIC = join(HERE, "public")
 const PORT = process.env.NYX_PORT || 3000
 
 ensureDirs()
+
+// Один раз докачиваем движок @qvac (~1 ГБ) при первом запуске — в фоне.
+ensureEngine().catch(() => {})
 
 // ——— Состояние загрузки (одна активная за раз) ———
 const dl = {
@@ -262,6 +266,13 @@ const server = http.createServer(async (req, res) => {
 		}
 		if (p === "/api/system/hardware" && req.method === "GET") {
 			return sendJson(res, 200, await detectHardware())
+		}
+		if (p === "/api/engine/status" && req.method === "GET") {
+			return sendJson(res, 200, engineStatus())
+		}
+		if (p === "/api/engine/install" && req.method === "POST") {
+			ensureEngine().catch(() => {})
+			return sendJson(res, 200, { ok: true })
 		}
 		if (p === "/api/setup/ensure" && req.method === "POST") {
 			await ensureLocalSetup()

@@ -96,9 +96,51 @@ function renderChoose() {
 }
 
 let poll = null
+async function ensureEngineFirst() {
+	let s = null
+	try {
+		s = await fetch("/api/engine/status").then((x) => x.json())
+	} catch {}
+	if (s && s.installed) return true
+	$("#dl-title").textContent = "Устанавливаем движок Nyx"
+	$("#dl-model").textContent = "QVAC-движок (llama.cpp) · один раз при первом запуске"
+	$("#dl-engine").textContent = "⚡ Локальный инференс-движок QVAC — скачивается один раз"
+	try {
+		await fetch("/api/engine/install", { method: "POST" })
+	} catch {}
+	return await new Promise((resolve) => {
+		const t = setInterval(async () => {
+			let st
+			try {
+				st = await fetch("/api/engine/status").then((x) => x.json())
+			} catch {
+				return
+			}
+			const pct = Math.round((st.pct || 0) * 100)
+			$("#bar").style.width = pct + "%"
+			$("#dl-pct").textContent = pct + "%"
+			$("#dl-size").textContent = st.total ? `${fmtGB(st.done)} / ${fmtGB(st.total)}` : ""
+			$("#dl-speed").textContent = fmtSpeed(st.speed)
+			$("#dl-eta").textContent = fmtEta(st.etaSec)
+			$("#dl-phase").textContent =
+				st.phase === "extracting" ? "Распаковка движка…" : st.installed ? "Движок готов" : "Загрузка движка…"
+			if (st.installed) {
+				clearInterval(t)
+				resolve(true)
+			} else if (st.phase === "error" && !st.active) {
+				clearInterval(t)
+				$("#dl-phase").textContent =
+					"Не удалось установить движок: " + (st.error || "ошибка") + ". Запуск в офлайн-режиме."
+				setTimeout(() => resolve(false), 1800)
+			}
+		}, 600)
+	})
+}
 async function startDownload(tier) {
 	chosen = tier
 	show("download")
+	await ensureEngineFirst()
+	$("#dl-title").textContent = "Загружаем модель"
 	$("#dl-model").textContent = `${tier.display} · ${tier.badges?.[0] || fmtGB(tier.bytes)}`
 	$("#dl-engine").textContent = isQvacNative(tier)
 		? "⚡ QVAC-native · модель Tether, инференс через QVAC SDK"

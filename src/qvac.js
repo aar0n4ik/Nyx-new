@@ -15,7 +15,13 @@ let sdk = null
 try {
 sdk = await import("@qvac/sdk")
 } catch {
+try {
+const { resolveEngineSdkEntry } = await import("./engine/engine.js")
+const href = resolveEngineSdkEntry()
+sdk = href ? await import(href) : null
+} catch {
 sdk = null
+}
 }
 
 export const hasSDK = !!sdk

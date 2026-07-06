@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Nyx — модели</title>
+	<link rel="stylesheet" href="/models.css" />
+</head>
+<body>
+	<div class="drag"></div>
+	<main class="wrap">
+		<header class="head">
+			<a class="back" href="/app">← В чат</a>
+			<h1>Модели</h1>
+			<p class="sub">Активная модель работает локально. Скачайте дополнительные и переключайтесь в один клик.</p>
+		</header>
+		<div id="list" class="list"></div>
+		<div id="dl" class="dl hidden">
+			<div class="dl-head"><span id="dl-name"></span><span id="dl-pct">0%</span></div>
+			<div class="progress"><div id="bar" class="bar"></div></div>
+			<div class="dl-meta"><span id="dl-size"></span><span id="dl-speed"></span><span id="dl-eta"></span></div>
+			<div class="dl-actions">
+				<button id="btn-pause" class="btn-ghost">Пауза</button>
+				<button id="btn-resume" class="btn-ghost hidden">Продолжить</button>
+				<button id="btn-cancel" class="btn-ghost danger">Отмена</button>
+			</div>
+		</div>
+	</main>
+	<script src="/models.js"></script>
+</body>
+</html>

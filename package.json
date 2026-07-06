@@ -29,10 +29,7 @@
 		"directories": { "buildResources": "build", "output": "dist" },
 		"win": {
 			"target": ["nsis"],
-			"artifactName": "Nyx-Setup.exe",
-			"signtoolOptions": {
-				"signingHashAlgorithms": ["sha256"]
-			}
+			"artifactName": "Nyx-Setup.exe"
 		},
 		"nsis": {
 			"oneClick": false,

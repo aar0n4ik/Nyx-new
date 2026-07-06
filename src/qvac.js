@@ -1,7 +1,9 @@
 // Real @qvac/sdk integration — the PRIMARY, on-device inference path for Nyx.
-// Uses the canonical v0.13.x `completion()` events API (loadModel -> completion
-// -> unloadModel -> close). No cloud. If the SDK/model isn't installed yet, the
-// caller falls back to a clearly-labeled offline responder (never a fake model).
+// Uses the canonical v0.14.x `completion()` events API (loadModel -> completion
+// -> unloadModel -> close) and QVAC TurboQuant KV-cache quantization (up to 5x
+// on-device context, SDK >=0.12). No cloud. If the SDK/model isn't installed
+// yet, the caller falls back to a clearly-labeled offline responder (never a
+// fake model).
 import { performance } from "node:perf_hooks"
 import { homedir } from "node:os"
 import { existsSync, readdirSync, statSync } from "node:fs"
@@ -79,6 +81,22 @@ const c = pickModelConst()
 return sdk?.[c] ?? sdk?.LLAMA_3_2_1B_INST_Q4_0 ?? c
 }
 
+// QVAC modelConfig: контекст + TurboQuant KV-cache квантизация (до 5x контекста
+// на устройстве без заметной потери качества; Google Research, ICLR 2026).
+// Полностью управляется env; TurboQuant по умолчанию включён, но безопасно
+// отключается (см. ensureLLM: если сборка SDK не поддерживает — авто-фолбэк).
+function buildModelConfig() {
+const cfg = {}
+const ctx = Number(process.env.NYX_CTX_SIZE || 4096)
+if (ctx > 0) cfg.ctx_size = ctx
+if (process.env.NYX_TURBOQUANT !== "0") {
+cfg["cache-type-k"] = process.env.NYX_TBQ_K || "tbq4_0"
+cfg["cache-type-v"] = process.env.NYX_TBQ_V || "pq4_0"
+}
+if (process.env.NYX_QVAC_DEVICE) cfg.device = process.env.NYX_QVAC_DEVICE
+return cfg
+}
+
 function touch() {
 if (idleTimer) clearTimeout(idleTimer)
 idleTimer = setTimeout(() => {
@@ -97,11 +115,19 @@ if (loadingPromise) return loadingPromise
 loadingPromise = (async () => {
 const modelSrc = resolveModelSrc()
 const modelType = process.env.NYX_QVAC_MODEL_TYPE || "llamacpp-completion"
+const modelConfig = buildModelConfig()
 let modelId
+// 1) предпочтительно: llamacpp-completion + TurboQuant KV-cache
 try {
-modelId = await sdk.loadModel({ modelSrc, modelType })
+modelId = await sdk.loadModel({ modelSrc, modelType, modelConfig })
 } catch {
+// 2) тот же тип, но без TurboQuant (старые/несовместимые сборки SDK)
+try {
+modelId = await sdk.loadModel({ modelSrc, modelType, modelConfig: { ctx_size: modelConfig.ctx_size } })
+} catch {
+// 3) обобщённый тип llm — последний безопасный фолбэк
 modelId = await sdk.loadModel({ modelSrc, modelType: "llm" })
+}
 }
 loaded.set("llm", modelId)
 touch()
@@ -225,6 +251,7 @@ const isLoaded = loaded.has("llm")
 const cfg = readConfig()
 return {
 sdkInstalled: hasSDK,
+turboquant: process.env.NYX_TURBOQUANT !== "0",
 model: modelLabel(),
 modelConst: pickModelConst(),
 activeModel: cfg?.selectedModel || null,

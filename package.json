@@ -1,7 +1,7 @@
 {
 	"name": "nyx",
 	"version": "0.2.0",
-	"description": "Nyx — полностью локальный, автономный и безопасный ИИ-агент (Edge AI).",
+	"description": "Nyx — полностью локальный, автономный и безопасный ИИ-агент (Edge AI), на движке QVAC (Tether).",
 	"type": "module",
 	"main": "electron/main.cjs",
 	"scripts": {
@@ -39,8 +39,11 @@
 			"createStartMenuShortcut": true
 		}
 	},
+	"engines": {
+		"node": ">=22.17"
+	},
 	"dependencies": {
-		"@qvac/sdk": "^0.13.0",
+		"@qvac/sdk": "^0.14.0",
 		"systeminformation": "^5.22.0"
 	},
 	"devDependencies": {

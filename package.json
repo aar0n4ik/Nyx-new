@@ -40,6 +40,7 @@
 		}
 	},
 	"dependencies": {
+		"@qvac/sdk": "^0.13.0",
 		"systeminformation": "^5.22.0"
 	},
 	"devDependencies": {

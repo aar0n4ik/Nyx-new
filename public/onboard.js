@@ -18,6 +18,17 @@ function fmtEta(s) {
 	return `≈ ${(s / 3600).toFixed(1)} ч`
 }
 
+// Каждая модель Nyx исполняется через QVAC SDK (форк llama.cpp). QVAC-native
+// модели Tether (MedPsy) помечаются отдельным бейджем.
+function isQvacNative(t) {
+	return !!(t && (t.qvacNative || t.engine === "qvac"))
+}
+function engineBadge(t) {
+	return isQvacNative(t)
+		? '<span class="qvac-badge qvac-native">⚡ QVAC-native</span>'
+		: '<span class="qvac-badge">⚡ QVAC engine</span>'
+}
+
 let catalog = null
 let recoTier = null
 let chosen = null
@@ -53,7 +64,7 @@ function renderHero(reco) {
 	$("#hero-card").innerHTML = `
 		<div class="emoji">${t.emoji || "🧠"}</div>
 		<div class="body">
-			<div class="title">${t.display}<span class="tag-reco">Подобрано для вас</span></div>
+			<div class="title">${t.display}<span class="tag-reco">Подобрано для вас</span>${engineBadge(t)}</div>
 			<div class="subtitle">${t.subtitle || ""}</div>
 			<div class="badges">${(t.badges || []).map((b) => `<span class="badge">${b}</span>`).join("")}</div>
 		</div>`
@@ -70,12 +81,12 @@ function renderChoose() {
 	for (const t of catalog.tiers) {
 		const isReco = t.id === recoTier.id
 		const el = document.createElement("button")
-		el.className = "card" + (isReco ? " reco" : "")
+		el.className = "card" + (isReco ? " reco" : "") + (isQvacNative(t) ? " qvac" : "")
 		el.style.setProperty("--accent", t.accent || "#d97706")
 		el.innerHTML = `
 			<div class="emoji">${t.emoji || "🧠"}</div>
 			<div class="body">
-				<div class="title">${t.display}${isReco ? '<span class="tag-reco">Рекомендуем</span>' : ""}</div>
+				<div class="title">${t.display}${isReco ? '<span class="tag-reco">Рекомендуем</span>' : ""}${engineBadge(t)}</div>
 				<div class="subtitle">${t.subtitle || ""}</div>
 				<div class="badges">${(t.badges || []).map((b) => `<span class="badge">${b}</span>`).join("")}</div>
 			</div>`
@@ -89,6 +100,9 @@ async function startDownload(tier) {
 	chosen = tier
 	show("download")
 	$("#dl-model").textContent = `${tier.display} · ${tier.badges?.[0] || fmtGB(tier.bytes)}`
+	$("#dl-engine").textContent = isQvacNative(tier)
+		? "⚡ QVAC-native · модель Tether, инференс через QVAC SDK"
+		: "⚡ Исполняется через QVAC SDK (форк llama.cpp) — на устройстве"
 	try {
 		await fetch("/api/model/download", {
 			method: "POST",

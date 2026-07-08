@@ -1,60 +1,58 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Nyx — настройка</title>
+	<title>Nyx — Setup</title>
 	<link rel="stylesheet" href="/onboard.css" />
-	<style>
-	/* QVAC branding (additive, поверх onboard.css) */
-	.qvac-strip{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;justify-content:center;padding:9px 14px;font-size:12.5px;color:#0e7490;background:rgba(8,145,178,.07);border-top:1px solid rgba(8,145,178,.20);backdrop-filter:blur(6px);z-index:30}
-	.qvac-strip b{color:#0891b2}
-	.qvac-badge{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#0e7490;background:rgba(8,145,178,.12);vertical-align:middle}
-	.qvac-badge.qvac-native{color:#fff;background:linear-gradient(135deg,#0891b2,#0e7490)}
-	.card.qvac{position:relative;border-color:#7dd3e8}
-	.card.qvac::after{content:"Powered by QVAC · Tether";position:absolute;top:8px;right:12px;font-size:10px;font-weight:700;color:#0891b2;letter-spacing:.02em}
-	.qvac-engine{margin:2px 0 10px;font-size:12.5px;font-weight:600;color:#0e7490}
-	</style>
 </head>
 <body>
 	<div class="drag"></div>
+
+	<!-- Custom window controls (frameless Electron window) -->
+	<div class="win-controls">
+		<button class="wc-btn wc-min" onclick="window.nyx?.minimize()" title="Minimize">─</button>
+		<button class="wc-btn wc-max" id="wcMax" onclick="window.nyx?.maximize()" title="Maximize">□</button>
+		<button class="wc-btn wc-close" onclick="window.nyx?.close()" title="Close">✕</button>
+	</div>
+
 	<main class="wrap">
-		<!-- Шаг 1: приветствие + авто-детект железа -->
+		<!-- Step 1: detect hardware -->
 		<section id="step-detect" class="step active">
 			<div class="logo">Nyx</div>
-			<h1>Добро пожаловать</h1>
-			<p class="sub">Ваш личный ИИ — полностью на вашем компьютере. Без облака, без аккаунтов, без отправки данных.</p>
+			<h1 id="t-welcome">Welcome</h1>
+			<p class="sub" id="t-welcome-sub">Your personal AI — completely on your computer. No cloud, no accounts, no data sent anywhere.</p>
 			<div class="detect-card">
 				<div class="spinner"></div>
-				<div id="detect-text">Подбираем лучшую модель под ваш компьютер…</div>
+				<div id="detect-text" data-i18n="detect_scanning">Selecting the best model for your computer…</div>
 			</div>
 		</section>
 
-		<!-- Шаг 2 (ГЛАВНЫЙ): одна рекомендация + одна кнопка -->
+		<!-- Step 2: single recommendation + one button -->
 		<section id="step-hero" class="step">
 			<div class="logo">Nyx</div>
-			<h1>Готово к запуску</h1>
+			<h1 id="t-ready">Ready to launch</h1>
 			<p class="sub" id="hero-reason"></p>
 			<div id="hero-card" class="hero-card"></div>
-			<button id="hero-start" class="btn-primary big">Начать</button>
+			<button id="hero-start" class="btn-primary big" data-i18n="btn_start">Start</button>
 			<div class="hero-foot">
-				<button id="show-more" class="link-btn">Выбрать другую модель</button>
+				<button id="show-more" class="link-btn" data-i18n="btn_show_more">Choose a different model</button>
 				<span class="dot">·</span>
 				<span id="hero-hw" class="muted-inline"></span>
 			</div>
 		</section>
 
-		<!-- Шаг 2b: ручной выбор (скрытый путь для меньшинства) -->
+		<!-- Step 2b: manual selection (hidden path) -->
 		<section id="step-choose" class="step">
-			<button id="back-hero" class="link-btn back">← Назад</button>
-			<h1>Все модели</h1>
-			<p class="sub">Включая <b>QVAC-native</b> модели Tether. Сменить можно в любой момент позже — в настройках приложения.</p>
+			<button id="back-hero" class="link-btn back" data-i18n="btn_back">← Back</button>
+			<h1 data-i18n="all_models_h">All models</h1>
+			<p class="sub" data-i18n="all_models_sub">You can switch models anytime later in app settings.</p>
 			<div id="cards" class="cards"></div>
 		</section>
 
-		<!-- Шаг 3: загрузка -->
+		<!-- Step 3: download progress -->
 		<section id="step-download" class="step">
-			<h1 id="dl-title">Загружаем модель</h1>
+			<h1 id="dl-title" data-i18n="dl_title">Downloading model</h1>
 			<p class="sub" id="dl-model"></p>
 			<div id="dl-engine" class="qvac-engine"></div>
 			<div class="progress"><div id="bar" class="bar"></div></div>
@@ -66,22 +64,22 @@
 			</div>
 			<div id="dl-phase" class="phase"></div>
 			<div class="dl-actions">
-				<button id="btn-pause" class="btn-ghost">Пауза</button>
-				<button id="btn-resume" class="btn-ghost hidden">Продолжить</button>
-				<button id="btn-cancel" class="btn-ghost danger">Отмена</button>
+				<button id="btn-pause" class="btn-ghost" data-i18n="btn_pause">Pause</button>
+				<button id="btn-resume" class="btn-ghost hidden" data-i18n="btn_resume">Resume</button>
+				<button id="btn-cancel" class="btn-ghost danger" data-i18n="btn_cancel">Cancel</button>
 			</div>
-			<p class="hint">Можно свернуть окно — загрузка продолжится, а прогресс виден в панели задач. При обрыве сети загрузка продолжится с того же места.</p>
+			<p class="hint" data-i18n="dl_hint">You can minimize the window — download continues in the background, progress is shown in the taskbar. If connection drops, download resumes from the same point.</p>
 		</section>
 
-		<!-- Шаг 4: готово -->
+		<!-- Step 4: done -->
 		<section id="step-done" class="step">
 			<div class="check">✓</div>
-			<h1>Всё готово</h1>
-			<p class="sub">Модель установлена и работает локально через движок QVAC. Модель можно сменить в любой момент в настройках.</p>
-			<button id="btn-launch" class="btn-primary big">Открыть Nyx</button>
+			<h1 data-i18n="done_h">All set</h1>
+			<p class="sub" data-i18n="done_sub">Model installed and running locally. You can switch models anytime in settings.</p>
+			<button id="btn-launch" class="btn-primary big" data-i18n="btn_launch">Open Nyx</button>
 		</section>
-		<div class="qvac-strip">⚡ Работает на движке <b>QVAC</b> · Tether — на устройстве, без облака</div>
 	</main>
+
 	<script src="/onboard.js"></script>
 </body>
 </html>

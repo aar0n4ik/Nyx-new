@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -12,19 +12,36 @@
   <!-- SIDEBAR -->
   <aside class="side" id="side">
     <div class="brand"><span class="logo"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><defs><linearGradient id="nyxg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f8bfd"/><stop offset="1" stop-color="#7b5cff"/></linearGradient></defs><rect x="2" y="2" width="28" height="28" rx="8" fill="url(#nyxg3)"/><path d="M9 23V9l14 14V9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Nyx</div>
-    <button class="newchat" id="newchat">＋ Новый чат</button>
+    <button class="newchat" id="newchat">＋ New chat</button>
     <div class="chats" id="chats"></div>
   </aside>
   <div class="scrim" id="scrim"></div>
 
   <!-- MAIN -->
   <main class="main">
-    <div class="topbar">
+    <div class="topbar" id="topbar">
       <button class="burger" id="burger">☰</button>
       <div class="title" id="title">Nyx Copilot</div>
       <span class="badge">⚡ Edge AI</span>
-      <a class="sitelink" href="/models" title="Модели">🧠 Модели</a>
-      <a class="sitelink" href="/" title="Back to site">← Site</a>
+
+      <!-- Right-side controls (no-drag) -->
+      <div class="topbar-right">
+        <select class="langsel" id="appLang" aria-label="Language">
+          <option value="en">🇺🇸 EN</option>
+          <option value="ru">🇷🇺 RU</option>
+          <option value="uk">🇺🇦 UK</option>
+          <option value="es">🇪🇸 ES</option>
+          <option value="de">🇩🇪 DE</option>
+          <option value="fr">🇫🇷 FR</option>
+        </select>
+        <a class="sitelink" href="/" id="sitelink">← Site</a>
+        <!-- Custom window controls (Electron only) -->
+        <div class="win-controls" id="winControls">
+          <button class="wc-btn wc-min" onclick="window.nyx?.minimize()" title="Minimize">─</button>
+          <button class="wc-btn wc-max" id="wcMax" onclick="window.nyx?.maximize()" title="Maximize">□</button>
+          <button class="wc-btn wc-close" onclick="window.nyx?.close()" title="Close">✕</button>
+        </div>
+      </div>
     </div>
 
     <div id="modelbar" style="display:none"></div>
@@ -35,10 +52,10 @@
 
     <div class="composer">
       <div class="box">
-        <textarea id="input" rows="1" placeholder="Спросите что угодно — на любом языке…"></textarea>
+        <textarea id="input" rows="1" placeholder="Ask anything…"></textarea>
         <button class="send" id="send">↑</button>
       </div>
-      <div class="hint">Nyx работает локально. Ключи безопасно шифруются на устройстве · Сделки — только после двойного подтверждения</div>
+      <div class="hint">Nyx runs locally. Keys are encrypted on-device · Trades only after double confirmation</div>
     </div>
     <footer class="appfoot">
       <span>Zero-Trust trading requires double confirmation</span>

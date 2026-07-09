@@ -464,15 +464,40 @@ $("#burger").onclick = () => { $("#side").classList.toggle("open"); $("#scrim").
 const closeSide = () => { $("#side").classList.remove("open"); $("#scrim").classList.remove("show") }
 $("#scrim").onclick = closeSide
 
+// ---------- language selector in topbar ----------
+const appLangSel = document.getElementById("appLang")
+if (appLangSel) {
+  appLangSel.value = LANG
+  appLangSel.addEventListener("change", () => {
+    LANG = appLangSel.value
+    try { localStorage.setItem("nyx.lang", LANG) } catch(e) {}
+    localizeStatic()
+    render()
+    renderThread()
+    checkModel()
+  })
+}
+
+// ---------- Electron window controls ----------
+if (window.nyx) {
+  const wc = document.getElementById("winControls")
+  if (wc) wc.classList.add("show")
+  const wcMax = document.getElementById("wcMax")
+  if (wcMax) {
+    window.nyx.onMaximize?.(() => { wcMax.textContent = "❐" })
+    window.nyx.onUnmaximize?.(() => { wcMax.textContent = "□" })
+  }
+}
+
 localizeStatic()
 if (!DB.chats.length) newChat(); else { render(); renderThread() }
 
 // If the user changes the language on the main site (another tab), keep the chat in sync.
 window.addEventListener("storage", (e) => {
-  if (e.key === "nyx.lang") { const nl = readLang(); if (nl !== LANG) { LANG = nl; localizeStatic(); render(); renderThread(); checkModel() } }
+  if (e.key === "nyx.lang") { const nl = readLang(); if (nl !== LANG) { LANG = nl; if (appLangSel) appLangSel.value = LANG; localizeStatic(); render(); renderThread(); checkModel() } }
 })
 // Also re-sync language when returning to this tab (e.g. after switching on the site).
-window.addEventListener("focus", () => { const nl = readLang(); if (nl !== LANG) { LANG = nl; localizeStatic(); render(); renderThread() } })
+window.addEventListener("focus", () => { const nl = readLang(); if (nl !== LANG) { LANG = nl; if (appLangSel) appLangSel.value = LANG; localizeStatic(); render(); renderThread() } })
 
 // ---------- on-device model status banner (real, live check) ----------
 // Honestly reflects whether the offline QVAC model is installed & ready, and

@@ -71,8 +71,8 @@ function createWindow() {
 		height: 820,
 		minWidth: 900,
 		minHeight: 640,
-		backgroundColor: "#0b0b0f",
-		titleBarStyle: "hiddenInset",
+		backgroundColor: "#ffffff",
+		frame: false,
 		webPreferences: {
 			preload: path.join(__dirname, "preload.cjs"),
 			contextIsolation: true,
@@ -86,6 +86,8 @@ function createWindow() {
 		win = null
 		clearInterval(pollTimer)
 	})
+	win.on("maximize", () => win.webContents.send("nyx:maximized"))
+	win.on("unmaximize", () => win.webContents.send("nyx:unmaximized"))
 }
 
 ipcMain.handle("nyx:version", () => app.getVersion())
@@ -95,6 +97,13 @@ ipcMain.on("nyx:progress", (_e, v) => {
 ipcMain.on("nyx:open-external", (_e, url) => {
 	if (/^https?:\/\//.test(url || "")) shell.openExternal(url)
 })
+ipcMain.on("nyx:minimize", () => win?.minimize())
+ipcMain.on("nyx:maximize", () => {
+	if (!win) return
+	if (win.isMaximized()) win.unmaximize()
+	else win.maximize()
+})
+ipcMain.on("nyx:close", () => win?.close())
 
 app.whenReady().then(() => {
 	startServer()

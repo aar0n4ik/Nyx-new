@@ -28,10 +28,9 @@
 		"directories": { "buildResources": "build", "output": "dist" },
 		"win": { "target": ["nsis"], "artifactName": "Nyx-Setup.exe" },
 		"nsis": {
-			"oneClick": false,
+			"oneClick": true,
 			"perMachine": false,
-			"allowElevation": true,
-			"allowToChangeInstallationDirectory": true,
+			"allowElevation": false,
 			"createDesktopShortcut": true,
 			"createStartMenuShortcut": true
 		}
